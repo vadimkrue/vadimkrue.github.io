@@ -1,0 +1,5 @@
+title: vadimkrue
+description:
+remote_theme: jekyll/lanyon
+plugins:
+  - jekyll-feed
