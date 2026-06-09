@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Формулировать мысли — навык
+title: "Формулировать мысли — навык"
 date: 2026-06-10
 published: true
 ---
