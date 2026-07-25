@@ -4,7 +4,7 @@ description:
 tagline: Вадим Крупин
 url: https://vadimkrue.github.io
 paginate: 1
-baseurl: ""
+baseurl: "/blog"
 permalink: pretty
 future: true
 
