@@ -1,7 +1,45 @@
 <!DOCTYPE html>
 <html>
+<head>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,100..700;1,100..700&display=swap" rel="stylesheet">
+<style>
+  html, body {
+    height: 100%;
+    margin: 0;
+  }
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-weight: 400;
+    font-size: max(24px, 2vw);
+  }
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6em;
+    text-align: center;
+  }
+  a {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-color: color-mix(in srgb, currentColor 15%, transparent);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.28em;
+    transition: text-decoration-color 0.2s ease, color 0.2s ease;
+  }
+  a:hover {
+    text-decoration-color: color-mix(in srgb, currentColor 100%, transparent);
+  }
+</style>
+</head>
 <body>
-  <h1>Vadim Krupin</h1>
   <ul>
     <li><a href="/blog/">Blog</a></li>
     <li><a href="/notes/">Notes</a></li>
