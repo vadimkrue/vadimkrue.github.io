@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Заметка</title>
+<link rel="stylesheet" href="style.css">
+
+<script type="importmap">
+{
+  "imports": {
+    "@codemirror/": "https://esm.sh/*@codemirror/",
+    "@lezer/": "https://esm.sh/*@lezer/",
+    "style-mod": "https://esm.sh/style-mod",
+    "w3c-keyname": "https://esm.sh/w3c-keyname",
+    "crelt": "https://esm.sh/crelt",
+    "@marijn/find-cluster-break": "https://esm.sh/@marijn/find-cluster-break"
+  }
+}
+</script>
+</head>
+<body>
+  <main class="page">
+    <div id="editor" class="editor-host"></div>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
