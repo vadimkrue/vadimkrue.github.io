@@ -1,10 +1,10 @@
 import { EditorState, EditorSelection, Prec } from "@codemirror/state";
-import { EditorView, keymap, placeholder } from "@codemirror/view";
+import { EditorView, keymap, placeholder, lineNumbers, highlightActiveLine, highlightActiveLineGutter } from "@codemirror/view";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import { markdown } from "@codemirror/lang-markdown";
 import { languages } from "@codemirror/language-data";
-import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
-import { tags } from "@lezer/highlight";
+import { defaultHighlightStyle, syntaxHighlighting } from "@codemirror/language";
+import { themeOverrides } from "./editor-theme.js";
 
 /* ---------- Хранилище ---------- */
 
@@ -49,29 +49,6 @@ function flushSave() {
     writeToStorage(view.state.doc.toString());
   }
 }
-
-/* ---------- Подсветка: контент выделяется, служебные символы приглушаются ---------- */
-
-var noteHighlightStyle = HighlightStyle.define([
-  { tag: tags.heading1, fontSize: "1.6em", fontWeight: "700" },
-  { tag: tags.heading2, fontSize: "1.35em", fontWeight: "700" },
-  { tag: tags.heading3, fontSize: "1.15em", fontWeight: "700" },
-  { tag: tags.strong, fontWeight: "700" },
-  { tag: tags.emphasis, fontStyle: "italic" },
-  { tag: tags.strikethrough, textDecoration: "line-through" },
-  { tag: tags.quote, color: "var(--ink-soft)", fontStyle: "italic" },
-  {
-    tag: tags.monospace,
-    fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
-    fontSize: "0.95em",
-  },
-  { tag: tags.list, color: "var(--accent)" },
-  { tag: tags.link, color: "var(--accent)" },
-  { tag: tags.url, color: "var(--accent)" },
-  // служебные символы разметки (#, **, ~~ и т.д.) — приглушаем, но не прячем
-  { tag: tags.meta, color: "var(--marks)" },
-  { tag: tags.processingInstruction, color: "var(--marks)" },
-]);
 
 /* ---------- Команды форматирования (хоткеи) ---------- */
 
@@ -133,12 +110,39 @@ function forEachSelectedLine(view, fn) {
 
 function setHeadingCommand(level) {
   return function (view) {
-    return forEachSelectedLine(view, function (line) {
-      var match = /^(#{1,6}\s+)/.exec(line.text);
-      var stripLen = match ? match[0].length : 0;
-      var prefix = level === 0 ? "" : "#".repeat(level) + " ";
-      return { from: line.from, to: line.from + stripLen, insert: prefix };
+    var state = view.state;
+    var changes = [];
+    var seen = new Set();
+
+    for (var range of state.selection.ranges) {
+      var startLine = state.doc.lineAt(range.from).number;
+      var endLine = state.doc.lineAt(range.to).number;
+      for (var n = startLine; n <= endLine; n++) {
+        if (seen.has(n)) continue;
+        seen.add(n);
+        var line = state.doc.line(n);
+        var match = /^(#{1,6}\s+)/.exec(line.text);
+        var stripLen = match ? match[0].length : 0;
+        var prefix = level === 0 ? "" : "#".repeat(level) + " ";
+        changes.push({ from: line.from, to: line.from + stripLen, insert: prefix });
+      }
+    }
+
+    if (!changes.length) return false;
+
+    // Явно считаем позицию конца строки ПОСЛЕ применения изменений
+    // (через mapPos), вместо того чтобы полагаться на дефолтный маппинг
+    // старого выделения — именно это давало курсор в начале строки.
+    var changeSet = state.changes(changes);
+    var mainLineEnd = state.doc.lineAt(state.selection.main.to).to;
+    var newCursorPos = changeSet.mapPos(mainLineEnd, 1);
+
+    view.dispatch({
+      changes: changes,
+      selection: EditorSelection.cursor(newCursorPos),
+      scrollIntoView: true,
     });
+    return true;
   };
 }
 
@@ -170,11 +174,6 @@ var noteKeymap = [
 
 /* ---------- Инициализация редактора ---------- */
 
-var editorTheme = EditorView.theme({
-  "&": { fontSize: "18px" },
-  ".cm-content": { caretColor: "var(--ink)" },
-});
-
 // CodeMirror по умолчанию выключает spellcheck на своём contenteditable
 // (логично для редактора кода) — для заметок включаем его явно.
 var spellcheckAttrs = EditorView.contentAttributes.of({
@@ -188,12 +187,15 @@ var state = EditorState.create({
   doc: startDoc,
   extensions: [
     history(),
+    lineNumbers(),
+    highlightActiveLine(),
+    highlightActiveLineGutter(),
     markdown({ codeLanguages: languages }),
-    syntaxHighlighting(noteHighlightStyle),
+    syntaxHighlighting(defaultHighlightStyle),
     placeholder("Начните печатать..."),
     EditorView.lineWrapping,
-    editorTheme,
     spellcheckAttrs,
+    themeOverrides,
     keymap.of([...defaultKeymap, ...historyKeymap]),
     Prec.highest(keymap.of(noteKeymap)),
     EditorView.updateListener.of(function (update) {
@@ -220,4 +222,4 @@ document.addEventListener("visibilitychange", function () {
   if (document.visibilityState === "hidden") flushSave();
 });
 window.addEventListener("pagehide", flushSave);
-window.addEventListener("beforeunload", flushSave);
+window.addEventListener("beforeunload", flushSave); 
